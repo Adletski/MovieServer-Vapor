@@ -1,6 +1,9 @@
 import Vapor
+import TelegramVaporBot
 import Fluent
 import FluentPostgresDriver
+
+let TGBOT: TGBotConnection = .init()
 
 // configures your application
 public func configure(_ app: Application) async throws {
@@ -8,10 +11,12 @@ public func configure(_ app: Application) async throws {
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
     // register routes
     
-    app.databases.use(.postgres(hostname: "flora.db.elephantsql.com", username: "ecytdsta", password: "ufcUrI46s4nkRwbaWUZuWSHUKXxtxjV4", database: "ecytdsta"), as: .psql)
-    
-    //register migration
-    app.migrations.add(CreateMoviesTableMigration())
+    let tgApi: String = "6764009840:AAH2W6yaxmvq67Qbe83JffU8B9dbldstQiQ"
+    TGBot.log.logLevel = app.logger.logLevel
+    let bot: TGBot = .init(app: app, botId: tgApi)
+    await TGBOT.setConnection(try await TGLongPollingConnection(bot: bot))
+    await DefaultBotHandlers.addHandlers(app: app, connection: TGBOT.connection)
+    try await TGBOT.connection.start()
     
     try routes(app)
 }
